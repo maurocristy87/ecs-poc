@@ -1,0 +1,5 @@
+/node_modules
+.vscode
+.vs
+dist/bundle.js
+yarn-error.log
