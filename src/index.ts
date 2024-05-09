@@ -7,9 +7,9 @@ import { Vector2 } from "./utils";
 entityManager.createEntity([InputController]);
 
 const createHouse = (position: Vector2): void => {
-    const tree = entityManager.createEntity([Transform, Renderer]);
-    entityManager.getComponent(tree, Renderer).symbol = "⌂";
-    entityManager.getComponent(tree, Transform).position = position;
+    const house = entityManager.createEntity([Transform, Renderer]);
+    entityManager.getComponent(house, Renderer).symbol = "⌂";
+    entityManager.getComponent(house, Transform).position = position;
 };
 
 createHouse({ x: 5, y: 5 });
