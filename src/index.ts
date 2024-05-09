@@ -8,7 +8,7 @@ entityManager.createEntity([InputController]);
 
 const createHouse = (position: Vector2): void => {
     const house = entityManager.createEntity([Transform, Renderer]);
-    entityManager.getComponent(house, Renderer).symbol = "⌂";
+    entityManager.getComponent(house, Renderer).symbol = "^";
     entityManager.getComponent(house, Transform).position = position;
 };
 
