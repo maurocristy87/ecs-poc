@@ -104,7 +104,7 @@ export class EntityManager implements IEntityManager {
         if (!this.components.has(id)) this.components.set(id, new Map());
 
         if (this.components.get(id).has(entity)) {
-            throw new Error(`Entity ${entity} already has a component of type ${id}`);
+            throw new Error(`Entity ${entity} already has a component of type ${instance.constructor.name}`);
         }
 
         this.components.get(id).set(entity, instance);
