@@ -3,8 +3,8 @@ import { System } from "../../ecs/SystemManager";
 import { Renderer } from "../component/Renderer";
 import { Transform } from "../component/Transform";
 
-export const matrixWidth: number = 32;
-export const matrixHeight: number = 32;
+export const matrixWidth: number = 24;
+export const matrixHeight: number = 24;
 
 export class RenderSystem implements System {
     private matrix: string[][] = [];

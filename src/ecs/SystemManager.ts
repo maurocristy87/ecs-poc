@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 export interface System {
     onCreate(): void;
     onDestroy(): void;

@@ -20,6 +20,10 @@
                 text-align: center;
             }
 
+            body a {
+                color: lightskyblue;
+            }
+
             #app {
                 margin-top: 32px;
                 margin-bottom: 32px;
@@ -41,7 +45,10 @@
     <body>
         <h2>Entity Component System - Proof of Concept</h2>
         <div id="app"></div>
-        <div>Use WASD to move the "@"</div>
+        <div>
+            Use WASD to move the <span style="color: #ff0000; font-weight: bold">@</span> -
+            <a target="_blank" href="https://github.com/maurocristy87/ecs-poc">source code</a>
+        </div>
         <script src="./bundle.js"></script>
     </body>
 </html>
