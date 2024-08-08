@@ -1,11 +1,10 @@
-import { IEntityManager } from "../../ecs/EntityManager";
-import { postGameLogicSystem, System } from "../../ecs/SystemManager";
+import { EntityManager } from "../../ecs/EntityManager";
+import { System } from "../../ecs/SystemManager";
 import { Transform } from "../component/Transform";
 import { matrixHeight, matrixWidth } from "./RenderSystem";
 
-@postGameLogicSystem()
 export class TransformSystem implements System {
-    constructor(private readonly entityManager: IEntityManager) {}
+    constructor(private readonly entityManager: EntityManager) {}
 
     public onCreate(): void {}
     public onEnabled(): void {}

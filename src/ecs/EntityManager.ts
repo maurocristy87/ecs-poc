@@ -1,47 +1,9 @@
-import "reflect-metadata";
-
-export interface IEntityManager {
-    // entity
-    createEntity(): Entity;
-    createEntity(components: Array<ComponentType | Component>): Entity;
-    removeEntity(entity: Entity): void;
-    removeAllEntities(): void;
-
-    // entity enable/disable
-    isEntityEnabled(entity: Entity): boolean;
-    disableEntity(entity: Entity): void;
-    enableEntity(entity: Entity): void;
-    disableEntitiesByComponent(componentType: ComponentType): void;
-    enableEntitiesByComponent(componentType: ComponentType): void;
-
-    // component
-    addComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): T;
-    addComponent<T extends Component>(entity: Entity, component: T): T;
-    getComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): T;
-    hasComponent(entity: Entity, componentType: ComponentType): boolean;
-    removeComponent(component: Component): void;
-    removeComponent(entity: Entity, componentType: ComponentType): void;
-
-    // component enable/disable
-    isComponentEnabled(component: Component): boolean;
-    isComponentEnabled<T extends Component>(entity: Entity, componentType: ComponentType<T>): boolean;
-    disableComponent(component: Component): void;
-    disableComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): void;
-    enableComponent(component: Component): void;
-    enableComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): void;
-
-    // query
-    search<T extends Component>(componentType: ComponentType<T>, includeDisabled?: boolean): SearchResult<T>[];
-    searchEntitiesByComponents(componentTypes: ComponentType[]): Entity[];
-    getEntityForComponent(component: Component): Entity;
-}
-
 export type Entity = number;
 export type Component = { [key: string]: any };
 export type ComponentType<T extends Component = Component> = { new (...args: any[]): T };
 export type SearchResult<T extends Component> = { entity: Entity; component: T };
 
-export class EntityManager implements IEntityManager {
+export class EntityManager {
     private lastEntityId: number = 0;
     private lastComponentTypeId: number = 0;
     private components: Map<number, Map<Entity, Component>> = new Map(); // [componenType id] -> [entity id] -> [component instance]
@@ -214,10 +176,8 @@ export class EntityManager implements IEntityManager {
     }
 
     private getComponentTypeId<T extends Component>(component: ComponentType<T> | T): number {
-        const target = typeof component === "object" ? component.constructor : component;
-        if (!Reflect.hasMetadata("typeId", target)) {
-            Reflect.defineMetadata("typeId", ++this.lastComponentTypeId, target);
-        }
-        return Reflect.getMetadata("typeId", target);
+        const prototype = typeof component === "object" ? component.constructor.prototype : component.prototype;
+        if (prototype._typeId === undefined) prototype._typeId = ++this.lastComponentTypeId;
+        return prototype._typeId;
     }
 }

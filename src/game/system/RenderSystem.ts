@@ -1,16 +1,15 @@
-import { IEntityManager } from "../../ecs/EntityManager";
-import { renderSystem, System } from "../../ecs/SystemManager";
+import { EntityManager } from "../../ecs/EntityManager";
+import { System } from "../../ecs/SystemManager";
 import { Renderer } from "../component/Renderer";
 import { Transform } from "../component/Transform";
 
 export const matrixWidth: number = 32;
 export const matrixHeight: number = 32;
 
-@renderSystem()
 export class RenderSystem implements System {
     private matrix: string[][] = [];
 
-    constructor(private readonly entityManager: IEntityManager) {}
+    constructor(private readonly entityManager: EntityManager) {}
 
     public onCreate(): void {}
     public onEnabled(): void {}

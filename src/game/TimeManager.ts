@@ -1,9 +1,4 @@
-export interface ITimeManager {
-    deltaTime: number;
-    update(time: number): void;
-}
-
-export class TimeManager implements ITimeManager {
+export class TimeManager {
     public deltaTime: number = 0;
 
     private then: number = 0;

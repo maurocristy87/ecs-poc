@@ -1,12 +1,11 @@
-import { IEntityManager } from "../../ecs/EntityManager";
-import { preGameLogicSystem, System } from "../../ecs/SystemManager";
+import { EntityManager } from "../../ecs/EntityManager";
+import { System } from "../../ecs/SystemManager";
 import { Input } from "../component/Input";
 
-@preGameLogicSystem()
 export class InputSystem implements System {
     private keyMap: Map<string, boolean> = new Map<string, boolean>();
 
-    constructor(private readonly entityManager: IEntityManager) {}
+    constructor(private readonly entityManager: EntityManager) {}
 
     public onEnabled(): void {}
     public onDisabled(): void {}

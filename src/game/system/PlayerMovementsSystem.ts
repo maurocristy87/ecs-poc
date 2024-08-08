@@ -1,15 +1,14 @@
-import { IEntityManager } from "../../ecs/EntityManager";
-import { gameLogicSystem, System } from "../../ecs/SystemManager";
+import { EntityManager } from "../../ecs/EntityManager";
+import { System } from "../../ecs/SystemManager";
 import { Input } from "../component/Input";
 import { PlayerMovement } from "../component/PlayerMovements";
 import { Transform } from "../component/Transform";
-import { ITimeManager } from "../TimeManager";
+import { TimeManager } from "../TimeManager";
 
-@gameLogicSystem()
 export class PlayerMovementSystem implements System {
     constructor(
-        private readonly entityManager: IEntityManager,
-        private readonly timeManager: ITimeManager,
+        private readonly entityManager: EntityManager,
+        private readonly timeManager: TimeManager,
     ) {}
 
     public onCreate(): void {}
@@ -22,8 +21,11 @@ export class PlayerMovementSystem implements System {
             const transform = this.entityManager.getComponent(entity, Transform);
             const input = this.entityManager.search(Input)[0].component;
 
-            transform.position.x += input.axis.x * playerMovement.speed * this.timeManager.deltaTime;
-            transform.position.y += input.axis.y * playerMovement.speed * this.timeManager.deltaTime;
+            playerMovement.direction.x = input.axis.x;
+            playerMovement.direction.y = input.axis.y;
+
+            transform.position.x += playerMovement.direction.x * playerMovement.speed * this.timeManager.deltaTime;
+            transform.position.y += playerMovement.direction.y * playerMovement.speed * this.timeManager.deltaTime;
         });
     }
 }
