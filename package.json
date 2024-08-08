@@ -1,18 +1,11 @@
 {
     "name": "ecs-poc",
     "version": "1.0.0",
-    "description": "Entity Component System POC",
-    "main": "dist/index.js",
-    "module": "dist/index.es.js",
-    "files": [
-        "dist"
-    ],
-    "types": "dist/index.d.ts",
+    "description": "Entity Component System - Proof of Concept",
     "scripts": {
         "start": "webpack serve --mode development",
         "start-prod": "webpack serve --mode production",
-        "build": "webpack --mode production",
-        "dev": "webpack --mode development"
+        "build": "webpack --mode production"
     },
     "license": "MIT",
     "devDependencies": {
@@ -22,6 +15,5 @@
         "webpack": "^5.91.0",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.0.4"
-    },
-    "dependencies": {}
+    }
 }
