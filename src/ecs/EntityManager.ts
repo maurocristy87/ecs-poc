@@ -2,6 +2,7 @@ export type Entity = number;
 export type Component = { [key: string]: any };
 export type ComponentType<T extends Component = Component> = { new (...args: any[]): T };
 export type SearchResult<T extends Component> = { entity: Entity; component: T };
+export type SearchCriteria = { [key: string]: any };
 
 export class EntityManager {
     private lastEntityId: number = 0;
@@ -123,6 +124,7 @@ export class EntityManager {
 
     public search<T extends Component>(
         componentType: ComponentType<T>,
+        criteria?: SearchCriteria,
         includeDisabled: boolean = false,
     ): SearchResult<T>[] {
         const result: SearchResult<T>[] = [];
@@ -130,6 +132,7 @@ export class EntityManager {
             .filter(
                 (record) =>
                     record[1] instanceof componentType &&
+                    (!criteria || Object.keys(criteria).every((key) => record[1][key] === criteria[key])) &&
                     (includeDisabled || (this.isEntityEnabled(record[0]) && record[2] === true)),
             )
             .forEach((record) => result.push({ entity: record[0], component: record[1] as T }));
