@@ -8,11 +8,6 @@ import { Tree } from "../component/Tree";
 export class PlayerTreeCollisionSystem implements System {
     constructor(private readonly entityManager: EntityManager) {}
 
-    public onCreate(): void {}
-    public onEnabled(): void {}
-    public onDisabled(): void {}
-    public onDestroy(): void {}
-
     public onUpdate(): void {
         this.entityManager.search(Player).forEach(({ entity }) => {
             const { position } = this.entityManager.getComponent(entity, Transform);

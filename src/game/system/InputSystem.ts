@@ -7,10 +7,6 @@ export class InputSystem implements System {
 
     constructor(private readonly entityManager: EntityManager) {}
 
-    public onEnabled(): void {}
-    public onDisabled(): void {}
-    public onDestroy(): void {}
-
     public onCreate(): void {
         document.addEventListener("keydown", this.eventHandler);
         document.addEventListener("keyup", this.eventHandler);

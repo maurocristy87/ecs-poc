@@ -6,11 +6,6 @@ import { matrixHeight, matrixWidth } from "./RenderSystem";
 export class TransformSystem implements System {
     constructor(private readonly entityManager: EntityManager) {}
 
-    public onCreate(): void {}
-    public onEnabled(): void {}
-    public onDisabled(): void {}
-    public onDestroy(): void {}
-
     public onUpdate(): void {
         this.entityManager.search(Transform).forEach(({ component: { position } }) => {
             position.x = Math.max(0, Math.min(matrixWidth - 1, position.x));

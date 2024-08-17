@@ -11,11 +11,6 @@ export class RenderSystem implements System {
 
     constructor(private readonly entityManager: EntityManager) {}
 
-    public onCreate(): void {}
-    public onEnabled(): void {}
-    public onDisabled(): void {}
-    public onDestroy(): void {}
-
     public onUpdate(): void {
         this.resetMatrix();
 

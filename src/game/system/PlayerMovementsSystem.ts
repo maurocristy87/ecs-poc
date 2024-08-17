@@ -11,11 +11,6 @@ export class PlayerMovementSystem implements System {
         private readonly timeManager: TimeManager,
     ) {}
 
-    public onCreate(): void {}
-    public onEnabled(): void {}
-    public onDisabled(): void {}
-    public onDestroy(): void {}
-
     public onUpdate(): void {
         this.entityManager.search(PlayerMovement).forEach(({ entity, component: playerMovement }) => {
             const transform = this.entityManager.getComponent(entity, Transform);

@@ -1,13 +1,15 @@
 export type Entity = number;
 export type Component = { [key: string]: any };
-export type ComponentType<T extends Component = Component> = { new (...args: any[]): T };
+export type ComponentType<T extends Component = Component> = { new (): T };
 export type SearchResult<T extends Component> = { entity: Entity; component: T };
 export type SearchCriteria = { [key: string]: any };
 
 export class EntityManager {
     private lastEntityId: number = 0;
-    private components: [Entity, Component, boolean][] = []; // [entity, component, enabled]
+    private lastComponentTypeId: number = 0;
+    private components: Map<number, Map<Entity, Component>> = new Map(); // componen type id -> entity id -> component
     private disabledEntities: Set<Entity> = new Set();
+    private disabledComponents: Map<Entity, Set<number>> = new Map(); // entity -> set of componen type id
 
     public createEntity(): Entity;
     public createEntity(components: Array<ComponentType | Component>): Entity;
@@ -18,13 +20,17 @@ export class EntityManager {
     }
 
     public removeEntity(entity: Entity): void {
-        this.components.forEach((record, index) => {
-            if (record[0] === entity) this.components.splice(index, 1);
+        this.components.forEach((row) => {
+            if (row.has(entity)) row.delete(entity);
         });
+        this.disabledComponents.delete(entity);
+        this.disabledEntities.delete(entity);
     }
 
     public removeAllEntities(): void {
-        this.components = [];
+        this.components.clear();
+        this.disabledComponents.clear();
+        this.disabledEntities.clear();
         this.lastEntityId = 0;
     }
 
@@ -33,7 +39,7 @@ export class EntityManager {
     }
 
     public enableEntity(entity: Entity): void {
-        if (!this.isEntityEnabled(entity)) this.disabledEntities.delete(entity);
+        this.disabledEntities.delete(entity);
     }
 
     public disableEntity(entity: Entity): void {
@@ -41,42 +47,48 @@ export class EntityManager {
     }
 
     public disableEntitiesByComponent(componentType: ComponentType): void {
-        this.components
-            .filter((record) => record[1] instanceof componentType)
-            .forEach((record) => this.disableEntity(record[0]));
+        for (const entity of this.components.get(this.getComponentTypeId(componentType))?.keys() ?? []) {
+            this.disableEntity(entity);
+        }
     }
 
     public enableEntitiesByComponent(componentType: ComponentType): void {
-        this.components
-            .filter((record) => record[1] instanceof componentType)
-            .forEach((record) => this.enableEntity(record[0]));
+        for (const entity of this.components.get(this.getComponentTypeId(componentType))?.keys() ?? []) {
+            this.enableEntity(entity);
+        }
     }
 
     public addComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): T;
     public addComponent<T extends Component>(entity: Entity, component: T): T;
     public addComponent<T extends Component>(entity: Entity, component: ComponentType<T> | T): T {
+        const id = this.getComponentTypeId(component);
         const instance = typeof component === "object" ? component : new component();
 
-        if (this.components.some((record) => record[0] === entity && record[1].constructor === instance.constructor)) {
-            throw new Error(`Entity ${entity} already has a component of type ${instance.constructor.name}`);
+        if (!this.components.has(id)) this.components.set(id, new Map());
+
+        if (this.components.get(id).has(entity)) {
+            throw new Error(`Entity ${entity} already has a component of type ${id}`);
         }
 
-        this.components.push([entity, instance, true]);
+        this.components.get(id).set(entity, instance);
 
         return instance as T;
     }
 
-    public getComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): T {
-        return this.components.find((record) => record[0] === entity && record[1] instanceof componentType)[1] as T;
+    public hasComponent(entity: Entity, componentType: ComponentType): boolean {
+        return this.getComponent(entity, componentType) !== undefined;
     }
 
-    public hasComponent(entity: Entity, componentType: ComponentType): boolean {
-        return this.components.some((record) => record[0] === entity && record[1] instanceof componentType);
+    public getComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): T {
+        return this.components.get(this.getComponentTypeId(componentType))?.get(entity) as T;
     }
 
     public getEntityForComponent(component: Component): Entity {
-        for (const [e, c] of this.components) {
-            if (c === component) return e;
+        const id = this.getComponentTypeId(component);
+        if (this.components.has(id)) {
+            for (const [e, c] of this.components.get(id)) {
+                if (c === component) return e;
+            }
         }
         return undefined;
     }
@@ -84,42 +96,43 @@ export class EntityManager {
     public removeComponent(component: Component): void;
     public removeComponent(entity: Entity, componentType: ComponentType): void;
     public removeComponent(arg1: Entity | Component, arg2?: ComponentType): void {
-        const index =
-            typeof arg1 === "object"
-                ? this.components.findIndex((record) => record[1] === arg1)
-                : this.components.findIndex((record) => record[0] === arg1 && record[1] instanceof arg2);
+        const id = this.getComponentTypeId(typeof arg1 === "object" ? arg1 : arg2);
+        const entity = typeof arg1 === "number" ? arg1 : this.getEntityForComponent(arg1);
 
-        if (index >= 0) this.components.splice(index, 1);
+        if (this.components.get(id)?.has(entity)) this.components.get(id).delete(entity);
     }
 
     public isComponentEnabled(component: Component): boolean;
     public isComponentEnabled<T extends Component>(entity: Entity, componentType: ComponentType<T>): boolean;
     public isComponentEnabled<T extends Component>(arg1: Entity | T, arg2?: ComponentType<T>): boolean {
-        return typeof arg1 === "object"
-            ? this.components.some((record) => record[1] === arg1 && record[2] === true)
-            : this.components.some((record) => record[0] === arg1 && record[1] instanceof arg2 && record[2] === true);
+        const id = this.getComponentTypeId(typeof arg1 === "object" ? arg1 : arg2);
+        const entity = typeof arg1 === "number" ? arg1 : this.getEntityForComponent(arg1);
+
+        return !this.disabledComponents.get(entity)?.has(id) ?? true; // eslint-disable-line
     }
 
     public disableComponent(component: Component): void;
     public disableComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): void;
     public disableComponent<T extends Component>(arg1: Entity | T, arg2?: ComponentType<T>): void {
-        const index =
-            typeof arg1 === "object"
-                ? this.components.findIndex((record) => record[1] === arg1)
-                : this.components.findIndex((record) => record[0] === arg1 && record[1] instanceof arg2);
+        const entity = typeof arg1 === "number" ? arg1 : this.getEntityForComponent(arg1);
+        const id = this.getComponentTypeId(typeof arg1 === "object" ? arg1 : arg2);
 
-        if (index >= 0) this.components[index][2] = false;
+        if (!this.disabledComponents.has(entity)) {
+            this.disabledComponents.set(entity, new Set([id]));
+        } else if (!this.disabledComponents.get(entity).has(id)) {
+            this.disabledComponents.get(entity).add(id);
+        }
     }
 
     public enableComponent(component: Component): void;
     public enableComponent<T extends Component>(entity: Entity, componentType: ComponentType<T>): void;
     public enableComponent<T extends Component>(arg1: Entity | T, arg2?: ComponentType<T>): void {
-        const index =
-            typeof arg1 === "object"
-                ? this.components.findIndex((record) => record[1] === arg1)
-                : this.components.findIndex((record) => record[0] === arg1 && record[1] instanceof arg2);
+        const entity = typeof arg1 === "number" ? arg1 : this.getEntityForComponent(arg1);
+        const id = this.getComponentTypeId(typeof arg1 === "object" ? arg1 : arg2);
 
-        if (index >= 0) this.components[index][2] = true;
+        if (this.disabledComponents.get(entity)?.has(id)) {
+            this.disabledComponents.get(entity).delete(id);
+        }
     }
 
     public search<T extends Component>(
@@ -128,14 +141,18 @@ export class EntityManager {
         includeDisabled: boolean = false,
     ): SearchResult<T>[] {
         const result: SearchResult<T>[] = [];
-        this.components
-            .filter(
-                (record) =>
-                    record[1] instanceof componentType &&
-                    (!criteria || Object.keys(criteria).every((key) => record[1][key] === criteria[key])) &&
-                    (includeDisabled || (this.isEntityEnabled(record[0]) && record[2] === true)),
-            )
-            .forEach((record) => result.push({ entity: record[0], component: record[1] as T }));
+        const id = this.getComponentTypeId(componentType);
+
+        if (this.components.has(id)) {
+            this.components.get(id).forEach((component, entity) => {
+                if (
+                    (!criteria || Object.keys(criteria).every((key) => component[key] === criteria[key])) &&
+                    (includeDisabled ||
+                        (this.isEntityEnabled(entity) && this.isComponentEnabled(entity, componentType)))
+                )
+                    result.push({ entity, component: component as T });
+            });
+        }
 
         return result;
     }
@@ -145,25 +162,28 @@ export class EntityManager {
         let first = true;
 
         for (const componentType of componentTypes) {
+            const id = this.getComponentTypeId(componentType);
+            if (!id || !this.components.has(id)) return [];
+
             if (first) {
-                entities.push(
-                    ...this.components
-                        .filter((record) => record[1] instanceof componentType)
-                        .map((record) => record[0]),
-                );
+                entities.push(...this.components.get(id).keys());
                 first = false;
                 continue;
             }
 
-            const toCompare = this.components
-                .filter((record) => record[1] instanceof componentType)
-                .map((record) => record[0]);
+            const toCompare = new Set(this.components.get(id).keys());
 
             entities.forEach((e, i) => {
-                if (!toCompare.includes(e)) entities.splice(i, 1);
+                if (!toCompare.has(e)) entities.splice(i, 1);
             });
         }
 
         return entities;
+    }
+
+    private getComponentTypeId<T extends Component>(component: ComponentType<T> | T): number {
+        const prototype = typeof component === "object" ? component.constructor.prototype : component.prototype;
+        if (prototype._type_id === undefined) prototype._type_id = ++this.lastComponentTypeId;
+        return prototype._type_id;
     }
 }
